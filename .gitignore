@@ -1,0 +1,6 @@
+deque
+*.o
+.vscode
+.kdbg*
+vgcore.*
+build
