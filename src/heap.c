@@ -4,7 +4,7 @@
 
 
 void heap_init(
-    heap* self, void* storage, int(*comparator)(void*, void*),
+    heap* self, void* storage, int(*comparator)(const void*, const void*),
     bool max_heap, uint32_t item_size, uint32_t storage_size
 )
 {
@@ -170,7 +170,7 @@ bool heap_pop(heap* self, void* item_receiver)
 
 void heap_inplace_heapify(
     heap* dest, void* array, uint32_t size, uint32_t item_size,
-    int(*comparator)(void*, void*), bool max_heap
+    int(*comparator)(const void*, const void*), bool max_heap
 )
 {
     heap_init(dest, array, comparator, max_heap, item_size, size);
@@ -182,7 +182,7 @@ void heap_inplace_heapify(
 
 void heap_inplace_sort(
     void* array, uint32_t size, uint32_t item_size,
-    int(*comparator)(void*, void*), bool ascending
+    int(*comparator)(const void*, const void*), bool ascending
 )
 {
     heap sorter;
