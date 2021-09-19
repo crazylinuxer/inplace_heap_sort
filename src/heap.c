@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "include/heap.h"
+#include "heap.h"
 
 
 void heap_init(
@@ -29,7 +29,7 @@ static int32_t get_left(heap* self, uint32_t index)
 {
     index *= 2;
     index += 1;
-    if (index > (self->item_size * self->items_count))
+    if (index > self->items_count)
     {
         return -1;
     }
@@ -41,7 +41,7 @@ static int32_t get_right(heap* self, uint32_t index)
 {
     index *= 2;
     index += 2;
-    if (index > (self->item_size * self->items_count))
+    if (index > self->items_count)
     {
         return -1;
     }
@@ -71,6 +71,7 @@ static void flow_up(heap* self)
         // ((current_item > parent_item) && (max_heap)) || ((current_item < parent_item) && (!max_heap))
         {
             exchange(current_item, parent_item, self->item_size);
+            current_item_index = parent_item_index;
         }
         else
         {
@@ -86,13 +87,13 @@ static void flow_down(heap* self)
     {
         int32_t left_index = get_left(self, current_item_index);
         int32_t right_index = get_right(self, current_item_index);
-        void* current_item = (void*)((uint8_t*)self + (current_item_index * self->item_size));
-        void* left = (void*)((uint8_t*)self + (left_index * self->item_size)); // unsafe ptr; use only if left_index != -1
-        void* right = (void*)((uint8_t*)self + (right_index * self->item_size)); // unsafe ptr; use only if right_index != -1
+        void* current_item = (void*)((uint8_t*)self->storage + (current_item_index * self->item_size));
+        void* left = (void*)((uint8_t*)self->storage + (left_index * self->item_size)); // unsafe ptr; use only if left_index != -1
+        void* right = (void*)((uint8_t*)self->storage + (right_index * self->item_size)); // unsafe ptr; use only if right_index != -1
         if ((left_index != -1) && (right_index != -1))
         {
-            int lr_comparing_result = self->comparator(left_index, right_index);
-            if (((lr_comparing_result == 1) && self->max_heap) || ((lr_comparing_result == -1) && !self->max_heap))
+            int lr_comparing_result = self->comparator(left, right);
+            if (((lr_comparing_result > 0) && self->max_heap) || ((lr_comparing_result < 0) && !self->max_heap))
             {
                 right_index = -1;
             }
@@ -101,12 +102,15 @@ static void flow_down(heap* self)
                 left_index = -1;
             }
         }
+        bool should_exit = true;
         if (left_index != -1)
         {
             int comparing_result = self->comparator(current_item, left);
             if (((comparing_result > 0) && (!self->max_heap)) || ((comparing_result < 0) && (self->max_heap)))
             {
                 exchange(left, current_item, self->item_size);
+                current_item_index = left_index;
+                should_exit = false;
             }
         }
         else if (right_index != -1)
@@ -115,9 +119,11 @@ static void flow_down(heap* self)
             if (((comparing_result > 0) && (!self->max_heap)) || ((comparing_result < 0) && (self->max_heap)))
             {
                 exchange(right, current_item, self->item_size);
+                current_item_index = right_index;
+                should_exit = false;
             }
         }
-        else
+        if (should_exit)
         {
             return;
         }
@@ -130,11 +136,11 @@ bool heap_insert(heap* self, void* item)
     {
         return false;
     }
-    memcpy(
-        (void*)((uint8_t*)self->storage + (self->item_size * self->items_count)),
-        item,
-        self->item_size
-    );
+    void* dest = (void*)((uint8_t*)self->storage + (self->item_size * self->items_count));
+    if (dest != item)
+    {
+        memcpy(dest, item, self->item_size);
+    }
     self->items_count++;
     flow_up(self);
     return true;
@@ -163,8 +169,28 @@ bool heap_pop(heap* self, void* item_receiver)
 }
 
 void heap_inplace_heapify(
-    heap* dest, void* array, uint32_t size,
-    int(*comparator)(void*, void*), bool max_heap, uint32_t item_size
-);
+    heap* dest, void* array, uint32_t size, uint32_t item_size,
+    int(*comparator)(void*, void*), bool max_heap
+)
+{
+    heap_init(dest, array, comparator, max_heap, item_size, size);
+    for (uint32_t i = 0; i < size; i++)
+    {
+        heap_insert(dest, (void*)((uint8_t*)array + (item_size * i)));
+    }
+}
 
-void heap_inplace_sort(void* array, uint32_t size);
+void heap_inplace_sort(
+    void* array, uint32_t size, uint32_t item_size,
+    int(*comparator)(void*, void*), bool ascending
+)
+{
+    heap sorter;
+    heap_inplace_heapify(&sorter, array, size, item_size, comparator, ascending);
+    for (int32_t i = size - 1; i >= 0; i--)
+    {
+        uint8_t tmp_storage[item_size];
+        heap_pop(&sorter, (void*)tmp_storage);
+        memcpy((void*)((uint8_t*)array + (item_size * i)), tmp_storage, item_size);
+    }
+}

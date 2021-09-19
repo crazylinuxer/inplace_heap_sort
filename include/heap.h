@@ -11,6 +11,7 @@ typedef struct
     uint32_t storage_size;
     uint32_t item_size;
     uint32_t items_count;
+    // comparator should return n where n>0 if item1>item2, n==0 if item1==item2 and n<0 if item1<item2
     int (*comparator)(void* item1, void* item2);
     bool max_heap;
 }
@@ -28,10 +29,13 @@ bool heap_insert(heap* self, void* item);
 bool heap_pop(heap* self, void* item_receiver);
 
 void heap_inplace_heapify(
-    heap* dest, void* array, uint32_t size,
-    int(*comparator)(void*, void*), bool max_heap, uint32_t item_size
+    heap* dest, void* array, uint32_t size, uint32_t item_size,
+    int(*comparator)(void*, void*), bool max_heap
 );
 
-void heap_inplace_sort(void* array, uint32_t size);
+void heap_inplace_sort(
+    void* array, uint32_t size, uint32_t item_size,
+    int(*comparator)(void*, void*), bool ascending
+);
 
 #endif
