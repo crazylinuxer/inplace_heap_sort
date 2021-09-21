@@ -88,8 +88,10 @@ static void flow_down(heap* self)
         int32_t left_index = get_left(self, current_item_index);
         int32_t right_index = get_right(self, current_item_index);
         void* current_item = (void*)((uint8_t*)self->storage + (current_item_index * self->item_size));
-        void* left = (void*)((uint8_t*)self->storage + (left_index * self->item_size)); // unsafe ptr; use only if left_index != -1
-        void* right = (void*)((uint8_t*)self->storage + (right_index * self->item_size)); // unsafe ptr; use only if right_index != -1
+        void* left = (void*)((uint8_t*)self->storage + (left_index * self->item_size));
+        // left is unsafe ptr; use only if left_index != -1
+        void* right = (void*)((uint8_t*)self->storage + (right_index * self->item_size));
+        // right is unsafe ptr; use only if right_index != -1
         if ((left_index != -1) && (right_index != -1))
         {
             int lr_comparing_result = self->comparator(left, right);
