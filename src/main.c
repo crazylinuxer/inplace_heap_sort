@@ -24,7 +24,7 @@ void get_random_data(void* storage, uint32_t n_bytes)
 }
 
 bool check_sorted_sequence(
-    void* storage, uint32_t items_count, uint32_t item_size,
+    void* storage, uint64_t items_count, uint32_t item_size,
     int(*comparator)(const void*, const void*), bool ascending
 )
 {
@@ -32,7 +32,7 @@ bool check_sorted_sequence(
     {
         return true;
     }
-    for (uint32_t i = 0; i < items_count - 1; i++)
+    for (uint64_t i = 0; i < items_count - 1; i++)
     {
         int comparing_result = comparator(
             (void*)((uint8_t*)storage + (item_size * i)),
@@ -64,10 +64,10 @@ int main(int argc, char** argv)
     uint64_t tests_count = 0;
     sscanf(argv[1], "%lu", &items_count);
     sscanf(argv[2], "%lu", &tests_count);
-    uint64_t* data = calloc(items_count, sizeof(uint64_t));
     int64_t microseconds_sum = 0;
     for (uint32_t i = 0; i < tests_count; i++)
     {
+        uint64_t* data = calloc(items_count, sizeof(uint64_t));
         get_random_data(data, items_count);
         int64_t start_microsecond = get_current_microsecond();
         heap_inplace_sort(data, items_count, sizeof(uint64_t), uint64_comparator, true);
@@ -75,6 +75,7 @@ int main(int argc, char** argv)
         if (!check_sorted_sequence(data, items_count, sizeof(uint64_t), uint64_comparator, true))
         {
             printf("ERROR!\n");
+            free(data);
             exit(1);
         }
         microseconds_sum += microseconds_elapsed;
@@ -83,6 +84,7 @@ int main(int argc, char** argv)
             microseconds_elapsed / 1000,
             microseconds_elapsed % 1000
         );
+        free(data);
     }
     int64_t microseconds_avg = microseconds_sum / tests_count;
     printf(
@@ -90,6 +92,5 @@ int main(int argc, char** argv)
         microseconds_avg / 1000,
         microseconds_avg % 1000
     );
-    free(data);
     return 0;
 }

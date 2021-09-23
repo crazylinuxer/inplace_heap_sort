@@ -5,7 +5,7 @@
 
 void heap_init(
     heap* self, void* storage, int(*comparator)(const void*, const void*),
-    bool max_heap, uint32_t item_size, uint32_t storage_size
+    bool max_heap, uint32_t item_size, uint64_t storage_size
 )
 {
     self->storage = storage;
@@ -25,7 +25,7 @@ static void exchange(void* item1, void* item2, uint32_t item_size)
 }
 
 /// -1 if does not exist
-static int32_t get_left(heap* self, uint32_t index)
+static signed_int_type get_left(heap* self, unsigned_int_type index)
 {
     index *= 2;
     index += 1;
@@ -33,11 +33,11 @@ static int32_t get_left(heap* self, uint32_t index)
     {
         return -1;
     }
-    return (int32_t)index;
+    return (signed_int_type)index;
 }
 
 /// -1 if does not exist
-static int32_t get_right(heap* self, uint32_t index)
+static signed_int_type get_right(heap* self, unsigned_int_type index)
 {
     index *= 2;
     index += 2;
@@ -45,21 +45,21 @@ static int32_t get_right(heap* self, uint32_t index)
     {
         return -1;
     }
-    return (int32_t)index;
+    return (signed_int_type)index;
 }
 
 /// -1 if does not exist
-static int32_t get_parent(uint32_t index)
+static signed_int_type get_parent(unsigned_int_type index)
 {
-    return (index / 2) - (int32_t)(!(bool)(index % 2));
+    return (index / 2) - (signed_int_type)(!(bool)(index % 2));
 }
 
 static void flow_up(heap* self)
 {
-    uint32_t current_item_index = self->items_count - 1;
+    unsigned_int_type current_item_index = self->items_count - 1;
     while (true)
     {
-        uint32_t parent_item_index = get_parent(current_item_index);
+        unsigned_int_type parent_item_index = get_parent(current_item_index);
         if (parent_item_index == -1)
         {
             return;
@@ -82,11 +82,11 @@ static void flow_up(heap* self)
 
 static void flow_down(heap* self)
 {
-    int32_t current_item_index = 0;
+    signed_int_type current_item_index = 0;
     while (true)
     {
-        int32_t left_index = get_left(self, current_item_index);
-        int32_t right_index = get_right(self, current_item_index);
+        signed_int_type left_index = get_left(self, current_item_index);
+        signed_int_type right_index = get_right(self, current_item_index);
         void* current_item = (void*)((uint8_t*)self->storage + (current_item_index * self->item_size));
         void* left = (void*)((uint8_t*)self->storage + (left_index * self->item_size));
         // left is unsafe ptr; use only if left_index != -1
@@ -171,25 +171,25 @@ bool heap_pop(heap* self, void* item_receiver)
 }
 
 void heap_inplace_heapify(
-    heap* dest, void* array, uint32_t size, uint32_t item_size,
+    heap* dest, void* array, uint64_t size, uint32_t item_size,
     int(*comparator)(const void*, const void*), bool max_heap
 )
 {
     heap_init(dest, array, comparator, max_heap, item_size, size);
-    for (uint32_t i = 0; i < size; i++)
+    for (unsigned_int_type i = 0; i < size; i++)
     {
         heap_insert(dest, (void*)((uint8_t*)array + (item_size * i)));
     }
 }
 
 void heap_inplace_sort(
-    void* array, uint32_t size, uint32_t item_size,
+    void* array, uint64_t size, uint32_t item_size,
     int(*comparator)(const void*, const void*), bool ascending
 )
 {
     heap sorter;
     heap_inplace_heapify(&sorter, array, size, item_size, comparator, ascending);
-    for (int32_t i = size - 1; i >= 0; i--)
+    for (signed_int_type i = size - 1; i >= 0; i--)
     {
         uint8_t tmp_storage[item_size];
         heap_pop(&sorter, (void*)tmp_storage);
