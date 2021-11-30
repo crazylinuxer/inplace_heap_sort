@@ -6,6 +6,20 @@
 #include "heap.h"
 
 
+#define ITEM_TYPE uint64_t
+#define COMPARATOR uint64_comparator
+
+
+int uint8_comparator(const void* item1, const void* item2)
+{
+    return (*(uint8_t*)item1 >= *(uint8_t*)item2) - (*(uint8_t*)item1 <= *(uint8_t*)item2);
+}
+
+int uint16_comparator(const void* item1, const void* item2)
+{
+    return (*(uint16_t*)item1 >= *(uint16_t*)item2) - (*(uint16_t*)item1 <= *(uint16_t*)item2);
+}
+
 int uint32_comparator(const void* item1, const void* item2)
 {
     return (*(uint32_t*)item1 >= *(uint32_t*)item2) - (*(uint32_t*)item1 <= *(uint32_t*)item2);
@@ -67,12 +81,12 @@ int main(int argc, char** argv)
     int64_t microseconds_sum = 0;
     for (uint32_t i = 0; i < tests_count; i++)
     {
-        uint64_t* data = calloc(items_count, sizeof(uint64_t));
-        get_random_data(data, items_count);
+        ITEM_TYPE* data = calloc(items_count, sizeof(ITEM_TYPE));
+        get_random_data(data, items_count * sizeof(ITEM_TYPE));
         int64_t start_microsecond = get_current_microsecond();
-        heap_inplace_sort(data, items_count, sizeof(uint64_t), uint64_comparator, true);
+        heap_inplace_sort(data, items_count, sizeof(ITEM_TYPE), COMPARATOR, true);
         int64_t microseconds_elapsed = get_current_microsecond() - start_microsecond;
-        if (!check_sorted_sequence(data, items_count, sizeof(uint64_t), uint64_comparator, true))
+        if (!check_sorted_sequence(data, items_count, sizeof(ITEM_TYPE), COMPARATOR, true))
         {
             printf("ERROR!\n");
             free(data);

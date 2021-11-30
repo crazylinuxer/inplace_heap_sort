@@ -16,16 +16,21 @@ void heap_init(
     self->items_count = 0;
 }
 
-static void exchange(void* item1, void* item2, uint32_t item_size)
+static inline void exchange(void* item1, void* item2, uint32_t item_size)
 {
-    uint8_t item_tmp_storage[item_size];
-    memcpy(item_tmp_storage, item1, item_size);
-    memmove(item1, item2, item_size);
-    memcpy(item2, item_tmp_storage, item_size);
+    uint8_t* p;
+    uint8_t* q;
+    uint8_t* const sentry = (uint8_t*)item1 + item_size;
+
+    for (p = item1, q = item2; p < sentry; ++p, ++q) {
+        uint8_t t = *p;
+        *p = *q;
+        *q = t;
+    }
 }
 
 /// -1 if does not exist
-static signed_int_type get_left(heap* self, unsigned_int_type index)
+static inline signed_int_type get_left(heap* self, unsigned_int_type index)
 {
     index *= 2;
     index += 1;
@@ -37,7 +42,7 @@ static signed_int_type get_left(heap* self, unsigned_int_type index)
 }
 
 /// -1 if does not exist
-static signed_int_type get_right(heap* self, unsigned_int_type index)
+static inline signed_int_type get_right(heap* self, unsigned_int_type index)
 {
     index *= 2;
     index += 2;
@@ -49,12 +54,12 @@ static signed_int_type get_right(heap* self, unsigned_int_type index)
 }
 
 /// -1 if does not exist
-static signed_int_type get_parent(unsigned_int_type index)
+static inline signed_int_type get_parent(unsigned_int_type index)
 {
     return (index / 2) - (signed_int_type)(!(bool)(index % 2));
 }
 
-static void flow_up(heap* self)
+static inline void flow_up(heap* self)
 {
     unsigned_int_type current_item_index = self->items_count - 1;
     while (true)
@@ -68,7 +73,7 @@ static void flow_up(heap* self)
         void* current_item = (void*)((uint8_t*)self->storage + (current_item_index * self->item_size));
         int comparing_result = self->comparator(current_item, parent_item);
         if (((comparing_result > 0) && (self->max_heap)) || ((comparing_result < 0) && (!self->max_heap)))
-        // ((current_item > parent_item) && (max_heap)) || ((current_item < parent_item) && (!max_heap))
+        // ((current_item > parent_item) and (max_heap)) or ((current_item < parent_item) and (not max_heap))
         {
             exchange(current_item, parent_item, self->item_size);
             current_item_index = parent_item_index;
@@ -80,7 +85,7 @@ static void flow_up(heap* self)
     }
 }
 
-static void flow_down(heap* self)
+static inline void flow_down(heap* self)
 {
     signed_int_type current_item_index = 0;
     while (true)
@@ -139,10 +144,7 @@ bool heap_insert(heap* self, void* item)
         return false;
     }
     void* dest = (void*)((uint8_t*)self->storage + (self->item_size * self->items_count));
-    if (dest != item)
-    {
-        memcpy(dest, item, self->item_size);
-    }
+    memmove(dest, item, self->item_size);
     self->items_count++;
     flow_up(self);
     return true;
@@ -158,7 +160,7 @@ bool heap_pop(heap* self, void* item_receiver)
     self->items_count--;
     if (self->items_count)
     {
-        memmove(
+        memcpy(
             self->storage,
             (void*)(
                 (uint8_t*)self->storage + (self->item_size * self->items_count)

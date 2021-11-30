@@ -30,7 +30,7 @@ heap;
 void heap_init(
     heap* self, void* storage, int(*comparator)(const void*, const void*),
     bool max_heap, uint32_t item_size, uint64_t storage_size
-    );
+);
 
 /// Return true if inserted successfully
 bool heap_insert(heap* self, void* item);
